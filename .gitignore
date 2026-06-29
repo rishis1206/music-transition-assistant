@@ -6,3 +6,4 @@ songs/
 *.wav
 .env
 *.zip
+separated/

@@ -25,6 +25,8 @@ from src.explanation_engine import build_explanation
 from src.manual_analyzer import parse_timestamp, get_event_at_time, evaluate_manual_transition
 from src.bpm_compatibility import calculate_bpm_score
 from src.harmonic_compatibility import calculate_harmonic_score
+from src.stem_separator import separate_stems
+import werkzeug.utils
 
 app = Flask(__name__)
 
@@ -37,6 +39,13 @@ def seconds_to_mmss(seconds):
 
 
 def analyze_song(file_path):
+    """
+    Run full analysis pipeline on a single song.
+    Uses Demucs stems when available for higher accuracy.
+    Falls back to full mix if separation fails.
+    """
+
+    # Load full mix for features that need the complete audio
     audio_data = load_audio(file_path)
     audio = audio_data["audio"]
     sr = audio_data["sample_rate"]
@@ -44,20 +53,58 @@ def analyze_song(file_path):
     features = extract_features(audio, sr)
     beat_data = detect_beats(audio, sr)
     energy_data = analyze_energy(audio, sr)
-    bass_data = analyze_bass(audio, sr)
 
-    detector808 = detect_808(audio, sr)
-    kick = detect_kick(audio, sr)
-    snare = detect_snare(audio, sr)
-    hihat = detect_hihat(audio, sr)
-    chord = detect_chords(audio, sr)
-    melody = detect_melody(audio, sr)
-    synth = detect_synth(audio, sr)
-    reverb = detect_reverb(audio, sr)
-    drop_data = detect_drops(audio, sr)
-    buildup_data = detect_buildups(audio, sr)
+    # Try to get stems via Demucs
+    stems = separate_stems(file_path)
 
-    vocal_segments = analyze_vocals(file_path)
+    if stems:
+        # Load each stem separately
+        bass_audio_data = load_audio(stems["bass"])
+        drums_audio_data = load_audio(stems["drums"])
+        other_audio_data = load_audio(stems["other"])
+        vocals_audio_data = load_audio(stems["vocals"])
+
+        bass_audio = bass_audio_data["audio"]
+        drums_audio = drums_audio_data["audio"]
+        other_audio = other_audio_data["audio"]
+        vocals_audio = vocals_audio_data["audio"]
+        stem_sr = bass_audio_data["sample_rate"]
+
+        # Use stem-specific analysis — much more accurate
+        bass_data   = analyze_bass(bass_audio, stem_sr)
+        detector808 = detect_808(bass_audio, stem_sr)
+        kick        = detect_kick(drums_audio, stem_sr)
+        snare       = detect_snare(drums_audio, stem_sr)
+        hihat       = detect_hihat(drums_audio, stem_sr)
+        chord       = detect_chords(other_audio, stem_sr)
+        melody      = detect_melody(other_audio, stem_sr)
+        synth       = detect_synth(other_audio, stem_sr)
+        reverb      = detect_reverb(other_audio, stem_sr)
+        drop_data   = detect_drops(drums_audio, stem_sr)
+        buildup_data = detect_buildups(other_audio, stem_sr)
+
+        # Whisper on clean vocal stem — no background noise confusion
+        vocal_segments = analyze_vocals(stems["vocals"])
+
+        print("[Pipeline] Using stem-based analysis")
+
+    else:
+        # Fallback — full mix analysis
+        bass_data    = analyze_bass(audio, sr)
+        detector808  = detect_808(audio, sr)
+        kick         = detect_kick(audio, sr)
+        snare        = detect_snare(audio, sr)
+        hihat        = detect_hihat(audio, sr)
+        chord        = detect_chords(audio, sr)
+        melody       = detect_melody(audio, sr)
+        synth        = detect_synth(audio, sr)
+        reverb       = detect_reverb(audio, sr)
+        drop_data    = detect_drops(audio, sr)
+        buildup_data = detect_buildups(audio, sr)
+        vocal_segments = analyze_vocals(file_path)
+
+        print("[Pipeline] Using full mix analysis (stems unavailable)")
+
     vocal_gaps = find_vocal_gaps(vocal_segments, min_gap=1.0)
 
     events = classify_events(
@@ -83,15 +130,14 @@ def analyze_song(file_path):
         "duration": audio_data["duration"],
         "vocal_gaps": vocal_gaps,
         "bpm": beat_data["bpm"],
-        "chroma": features["chroma"]
+        "chroma": features["chroma"],
+        "used_stems": stems is not None
     }
 
 
 def filter_events_by_range(events, start_time, end_time):
-    """Filter events to only those within a time range."""
     filtered = [e for e in events if start_time <= e["time"] <= end_time]
     if not filtered:
-        # fallback — find closest event to midpoint
         mid = (start_time + end_time) / 2
         closest = min(events, key=lambda e: abs(e["time"] - mid))
         filtered = [closest]
@@ -175,7 +221,9 @@ def build_result(best, matches, result1, result2, similarity_score, mode="auto-a
         explanation=explanation,
         mode=mode,
         manual_quality=None,
-        manual_quality_color=None
+        manual_quality_color=None,
+        song1_used_stems=result1.get("used_stems", False),
+        song2_used_stems=result2.get("used_stems", False)
     )
 
 
@@ -191,8 +239,11 @@ def analyze():
     song2 = request.files["song2"]
     mode = request.form.get("mode", "auto-auto")
 
-    song1_path = "songs/song1.mp3"
-    song2_path = "songs/song2.mp3"
+    song1_filename = werkzeug.utils.secure_filename(song1.filename)
+    song2_filename = werkzeug.utils.secure_filename(song2.filename)
+
+    song1_path = f"songs/{song1_filename}"
+    song2_path = f"songs/{song2_filename}"
 
     song1.save(song1_path)
     song2.save(song2_path)
@@ -209,9 +260,6 @@ def analyze():
         chroma2=result2["chroma"]
     )
 
-    # =====================================
-    # MODE 1 — AUTO → AUTO
-    # =====================================
     if mode == "auto-auto":
         matches = find_best_match(result1["ranked_events"], result2["ranked_events"], **bpm_kw)
         if not matches:
@@ -220,9 +268,6 @@ def analyze():
         return render_template("results.html",
             **build_result(matches[0], matches, result1, result2, similarity_score, mode))
 
-    # =====================================
-    # MODE 2 — MANUAL → AUTO
-    # =====================================
     elif mode == "manual-auto":
         ts1 = parse_timestamp(request.form.get("timestamp1", "0"))
         event1 = get_event_at_time(result1["ranked_events"], ts1)
@@ -235,9 +280,6 @@ def analyze():
         return render_template("results.html",
             **build_result(best, matches, result1, result2, similarity_score, mode))
 
-    # =====================================
-    # MODE 3 — AUTO → MANUAL
-    # =====================================
     elif mode == "auto-manual":
         ts2 = parse_timestamp(request.form.get("timestamp2", "0"))
         event2 = get_event_at_time(result2["ranked_events"], ts2)
@@ -250,9 +292,6 @@ def analyze():
         return render_template("results.html",
             **build_result(best, matches, result1, result2, similarity_score, mode))
 
-    # =====================================
-    # MODE 4 — MANUAL → MANUAL
-    # =====================================
     elif mode == "manual-manual":
         ts1 = parse_timestamp(request.form.get("timestamp1", "0"))
         ts2 = parse_timestamp(request.form.get("timestamp2", "0"))
@@ -263,12 +302,9 @@ def analyze():
         bpm_score = calculate_bpm_score(result1["bpm"], result2["bpm"])
         harmonic_score = calculate_harmonic_score(result1["chroma"], result2["chroma"])
         evaluation = evaluate_manual_transition(event1, event2, bpm_score, harmonic_score, similarity_score)
-
         transitions = recommend_pair_transitions(event1, event2)
-
         compat_score = (bpm_score * 0.40 + harmonic_score * 0.35 + similarity_score * 0.25) * 100
         compat_label, compat_color = get_compat_label(compat_score)
-
         explanation = build_explanation(
             event1=event1, event2=event2,
             bpm1=result1["bpm"], bpm2=result2["bpm"],
@@ -300,19 +336,17 @@ def analyze():
             bpm_score=bpm_score, harmonic_score=harmonic_score,
             compat_score=round(compat_score, 1),
             compat_label=compat_label, compat_color=compat_color,
-            explanation=explanation, mode=mode
+            explanation=explanation, mode=mode,
+            song1_used_stems=result1.get("used_stems", False),
+            song2_used_stems=result2.get("used_stems", False)
         )
 
-    # =====================================
-    # MODE 5 — RANGE → RANGE
-    # =====================================
     elif mode == "range-range":
         start1 = parse_timestamp(request.form.get("range1_start", "0"))
-        end1 = parse_timestamp(request.form.get("range1_end", "60"))
+        end1   = parse_timestamp(request.form.get("range1_end", "60"))
         start2 = parse_timestamp(request.form.get("range2_start", "0"))
-        end2 = parse_timestamp(request.form.get("range2_end", "60"))
+        end2   = parse_timestamp(request.form.get("range2_end", "60"))
 
-        # Filter events to within the specified ranges
         events1_filtered = filter_events_by_range(result1["ranked_events"], start1, end1)
         events2_filtered = filter_events_by_range(result2["ranked_events"], start2, end2)
 
