@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TransitionAI — Results</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --black: #0A0A0A;
+            --surface: #141414;
+            --card: #1C1C1C;
+            --border: #2A2A2A;
+            --orange: #FF5500;
+            --orange-glow: #FF8C00;
+            --text: #F0F0F0;
+            --muted: #666666;
+            --dim: #333333;
+            --green: #44FF88;
+            --yellow: #FFAA44;
+        }
+
+        html, body {
+            background: var(--black);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.6;
+        }
+
+        nav {
+            padding: 24px 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.1rem; letter-spacing: -0.02em; }
+        .logo span { color: var(--orange); }
+        .back-btn { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--muted); text-decoration: none; letter-spacing: 0.05em; transition: color 0.2s; }
+        .back-btn:hover { color: var(--orange); }
+
+        .page { max-width: 880px; margin: 0 auto; padding: 64px 48px; }
+
+        .result-header { margin-bottom: 48px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .result-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; color: var(--orange); text-transform: uppercase; margin-bottom: 12px; }
+        .result-title { font-family: 'Space Grotesk', sans-serif; font-size: 2.4rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; }
+
+        .compat-badge { text-align: right; padding-bottom: 4px; }
+        .compat-badge-label { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+        .compat-badge-score { font-family: 'Space Grotesk', sans-serif; font-size: 2.8rem; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+        .compat-badge-text { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; opacity: 0.8; margin-top: 4px; letter-spacing: 0.05em; }
+
+        .match-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; margin-bottom: 24px; position: relative; }
+        .match-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--orange), var(--orange-glow), var(--orange)); }
+
+        .match-card-header { padding: 28px 32px 24px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); }
+        .match-label { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+        .event-type-badge { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 600; color: var(--text); }
+        .score-display { text-align: right; }
+        .score-num { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 700; color: var(--orange); line-height: 1; }
+        .score-label { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted); letter-spacing: 0.1em; margin-top: 2px; }
+
+        .timeline { padding: 32px; display: grid; grid-template-columns: 1fr 80px 1fr; gap: 16px; align-items: center; border-bottom: 1px solid var(--border); }
+        .timeline-song { background: var(--surface); border-radius: 12px; padding: 20px; }
+        .timeline-song-label { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; color: var(--orange); text-transform: uppercase; margin-bottom: 8px; }
+        .timeline-time { font-family: 'Space Grotesk', sans-serif; font-size: 2.2rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); line-height: 1; margin-bottom: 8px; }
+        .timeline-time span { font-size: 1rem; color: var(--muted); font-weight: 400; }
+        .timeline-meta { display: flex; gap: 12px; flex-wrap: wrap; }
+        .meta-chip { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted); background: var(--dim); padding: 3px 8px; border-radius: 4px; }
+        .timeline-arrow { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .arrow-track { width: 100%; height: 1px; background: linear-gradient(90deg, var(--border), var(--orange), var(--border)); }
+        .arrow-head { font-family: 'Space Grotesk', sans-serif; font-size: 1.4rem; color: var(--orange); }
+
+        .stats-row { padding: 24px 32px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
+        .stat-cell { background: var(--card); padding: 16px 20px; }
+        .stat-name { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+        .stat-val { font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+        .stat-bar { height: 3px; background: var(--dim); border-radius: 2px; }
+        .stat-bar-fill { height: 3px; background: linear-gradient(90deg, var(--orange), var(--orange-glow)); border-radius: 2px; }
+
+        .sfx-section { padding: 28px 32px; }
+        .sfx-heading { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; margin-bottom: 16px; }
+        .sfx-grid { display: flex; flex-direction: column; gap: 8px; }
+        .sfx-row { display: grid; grid-template-columns: 140px 100px 1fr; align-items: center; gap: 16px; background: var(--surface); border-radius: 10px; padding: 12px 16px; border: 1px solid transparent; transition: border-color 0.2s; }
+        .sfx-row:hover { border-color: var(--border); }
+        .sfx-name-tag { font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--orange); background: rgba(255,85,0,0.1); padding: 4px 10px; border-radius: 6px; display: inline-block; }
+        .sfx-timestamp { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text); font-weight: 500; }
+        .sfx-note-text { font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
+
+        .explanation-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; margin-bottom: 24px; }
+        .explanation-verdict { padding: 24px 32px; border-bottom: 1px solid var(--border); }
+        .explanation-verdict-label { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+        .explanation-verdict-text { font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
+        .explanation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+        .explanation-col { background: var(--card); padding: 24px 28px; }
+        .explanation-col-label { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 14px; }
+        .explanation-item { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
+        .explanation-icon { font-size: 0.7rem; margin-top: 2px; flex-shrink: 0; }
+        .explanation-text { font-size: 0.82rem; color: var(--text); line-height: 1.5; }
+        .explanation-warnings-label { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.12em; color: #FFAA44; text-transform: uppercase; margin-top: 20px; margin-bottom: 14px; }
+
+        .secondary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+        .secondary-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; }
+        .secondary-label { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+        .secondary-val { font-family: 'Space Grotesk', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+        .secondary-sub { font-size: 0.75rem; color: var(--muted); }
+
+        .section-title { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 12px; margin-top: 40px; }
+        .alt-list { display: flex; flex-direction: column; gap: 8px; }
+        .alt-row { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; display: grid; grid-template-columns: 1fr 1fr auto; gap: 16px; align-items: center; transition: border-color 0.2s; }
+        .alt-row:hover { border-color: var(--dim); }
+        .alt-time-pair { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text); }
+        .alt-score { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 700; color: var(--orange); }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo">Transition<span>AI</span></div>
+    <a href="/" class="back-btn">← New Analysis</a>
+</nav>
+
+<div class="page">
+
+    <!-- HEADER -->
+    <div class="result-header">
+        <div class="result-header-left">
+            <div class="result-eyebrow">Analysis Complete</div>
+            <h1 class="result-title">Your transition point</h1>
+        </div>
+        <div class="compat-badge">
+            <div class="compat-badge-label">Compatibility</div>
+            <div class="compat-badge-score" style="color:{{ compat_color }}">{{ compat_score }}%</div>
+            <div class="compat-badge-text" style="color:{{ compat_color }}">{{ compat_label }}</div>
+        </div>
+    </div>
+
+    <!-- MAIN MATCH CARD -->
+    <div class="match-card">
+
+        <div class="match-card-header">
+            <div>
+                <div class="match-label">Best Match</div>
+                <div class="event-type-badge">{{ event_type }}</div>
+            </div>
+            <div class="score-display">
+                <div class="score-num">{{ "%.0f"|format(score) }}</div>
+                <div class="score-label">MATCH SCORE</div>
+            </div>
+        </div>
+
+        <div class="timeline">
+            <div class="timeline-song">
+                <div class="timeline-song-label">Song A — Exit at</div>
+                <div class="timeline-time">{{ "%.2f"|format(song1_time) }}<span>s</span></div>
+                <div class="timeline-meta">
+                    <span class="meta-chip">Bass {{ "%.0f"|format(song1_bass * 100) }}%</span>
+                    <span class="meta-chip">Energy {{ "%.0f"|format(song1_energy * 100) }}%</span>
+                </div>
+            </div>
+            <div class="timeline-arrow">
+                <div class="arrow-track"></div>
+                <div class="arrow-head">→</div>
+                <div class="arrow-track"></div>
+            </div>
+            <div class="timeline-song">
+                <div class="timeline-song-label">Song B — Enter at</div>
+                <div class="timeline-time">{{ "%.2f"|format(song2_time) }}<span>s</span></div>
+                <div class="timeline-meta">
+                    <span class="meta-chip">Bass {{ "%.0f"|format(song2_bass * 100) }}%</span>
+                    <span class="meta-chip">Energy {{ "%.0f"|format(song2_energy * 100) }}%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-cell">
+                <div class="stat-name">Song A Confidence</div>
+                <div class="stat-val">{{ "%.0f"|format(song1_confidence * 100) }}%</div>
+                <div class="stat-bar"><div class="stat-bar-fill" style="width:{{ song1_confidence * 100 }}%"></div></div>
+            </div>
+            <div class="stat-cell">
+                <div class="stat-name">Song B Confidence</div>
+                <div class="stat-val">{{ "%.0f"|format(song2_confidence * 100) }}%</div>
+                <div class="stat-bar"><div class="stat-bar-fill" style="width:{{ song2_confidence * 100 }}%"></div></div>
+            </div>
+            <div class="stat-cell">
+                <div class="stat-name">BPM Compatibility</div>
+                <div class="stat-val">{{ "%.0f"|format(bpm_score * 100) }}%</div>
+                <div class="stat-bar"><div class="stat-bar-fill" style="width:{{ bpm_score * 100 }}%"></div></div>
+            </div>
+            <div class="stat-cell">
+                <div class="stat-name">Harmonic Match</div>
+                <div class="stat-val">{{ "%.0f"|format(harmonic_score * 100) }}%</div>
+                <div class="stat-bar"><div class="stat-bar-fill" style="width:{{ harmonic_score * 100 }}%"></div></div>
+            </div>
+        </div>
+
+        {% if transitions %}
+        <div class="sfx-section">
+            <div class="sfx-heading">SFX Placement Guide</div>
+            <div class="sfx-grid">
+                {% for t in transitions %}
+                <div class="sfx-row">
+                    <span class="sfx-name-tag">{{ t.sfx }}</span>
+                    <span class="sfx-timestamp">@ {{ t.place_at }}s</span>
+                    <span class="sfx-note-text">{{ t.note }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+    <!-- END MATCH CARD -->
+
+    <!-- EXPLANATION CARD -->
+    {% if explanation %}
+    <div class="explanation-card">
+
+        <div class="explanation-verdict">
+            <div class="explanation-verdict-label">Why This Transition</div>
+            <p class="explanation-verdict-text">{{ explanation.verdict }}</p>
+        </div>
+
+        <div class="explanation-grid">
+
+            <div class="explanation-col">
+                <div class="explanation-col-label" style="color:var(--muted);">Reasons Selected</div>
+                {% for r in explanation.reasons %}
+                <div class="explanation-item">
+                    <span class="explanation-icon" style="color:var(--orange);">→</span>
+                    <span class="explanation-text">{{ r }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="explanation-col">
+                <div class="explanation-col-label" style="color:#44FF88;">Strengths</div>
+                {% for s in explanation.strengths %}
+                <div class="explanation-item">
+                    <span class="explanation-icon" style="color:#44FF88;">✓</span>
+                    <span class="explanation-text">{{ s }}</span>
+                </div>
+                {% endfor %}
+
+                {% if explanation.warnings %}
+                <div class="explanation-warnings-label">Watch Out</div>
+                {% for w in explanation.warnings %}
+                <div class="explanation-item">
+                    <span class="explanation-icon" style="color:#FFAA44;">⚠</span>
+                    <span class="explanation-text" style="color:var(--muted);">{{ w }}</span>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+
+        </div>
+
+    </div>
+    {% endif %}
+    <!-- END EXPLANATION CARD -->
+
+    <!-- SECONDARY STATS -->
+    <div class="secondary-grid">
+        <div class="secondary-card">
+            <div class="secondary-label">Song A BPM</div>
+            <div class="secondary-val">{{ "%.1f"|format(bpm1) }}</div>
+            <div class="secondary-sub">beats per minute</div>
+        </div>
+        <div class="secondary-card">
+            <div class="secondary-label">Song B BPM</div>
+            <div class="secondary-val">{{ "%.1f"|format(bpm2) }}</div>
+            <div class="secondary-sub">beats per minute</div>
+        </div>
+        <div class="secondary-card">
+            <div class="secondary-label">Audio Similarity</div>
+            <div class="secondary-val">{{ "%.0f"|format(similarity_score * 100) }}%</div>
+            <div class="secondary-sub">spectral match</div>
+        </div>
+    </div>
+
+    {% if alternatives %}
+    <div class="section-title">Alternative Transitions</div>
+    <div class="alt-list">
+        {% for alt in alternatives %}
+        <div class="alt-row">
+            <div class="alt-time-pair">A: {{ "%.2f"|format(alt.song1_time) }}s</div>
+            <div class="alt-time-pair">B: {{ "%.2f"|format(alt.song2_time) }}s</div>
+            <div class="alt-score">{{ "%.0f"|format(alt.score) }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</div>
+
+</body>
+</html>

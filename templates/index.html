@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TransitionAI — Find Your Perfect Mix</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --black: #0A0A0A; --surface: #141414; --card: #1C1C1C;
+            --border: #2A2A2A; --orange: #FF5500; --orange-glow: #FF8C00;
+            --text: #F0F0F0; --muted: #666666; --dim: #333333;
+        }
+        html, body { height: 100%; background: var(--black); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1000; opacity: 0.6; }
+        nav { position: fixed; top: 0; left: 0; right: 0; padding: 24px 48px; display: flex; justify-content: space-between; align-items: center; z-index: 100; background: linear-gradient(to bottom, rgba(10,10,10,0.9), transparent); }
+        .logo { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.1rem; letter-spacing: -0.02em; color: var(--text); }
+        .logo span { color: var(--orange); }
+        .nav-tag { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--muted); letter-spacing: 0.1em; }
+        .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 120px 48px 80px; position: relative; text-align: center; }
+        .hero::after { content: ''; position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); width: 600px; height: 300px; background: radial-gradient(ellipse, rgba(255,85,0,0.12) 0%, transparent 70%); pointer-events: none; }
+        .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.2em; color: var(--orange); text-transform: uppercase; margin-bottom: 24px; }
+        h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.8rem, 6vw, 5.5rem); font-weight: 700; line-height: 1.0; letter-spacing: -0.03em; margin-bottom: 20px; max-width: 800px; }
+        h1 em { font-style: normal; color: var(--orange); }
+        .subtitle { font-size: 1rem; color: var(--muted); max-width: 480px; line-height: 1.6; margin-bottom: 48px; font-weight: 300; }
+
+        /* MODE SELECTOR */
+        .mode-selector { display: flex; gap: 6px; margin-bottom: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 6px; flex-wrap: wrap; justify-content: center; max-width: 760px; }
+        .mode-btn { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; letter-spacing: 0.06em; color: var(--muted); background: transparent; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .mode-btn:hover { color: var(--text); }
+        .mode-btn.active { background: var(--orange); color: white; }
+        .mode-hint { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted); letter-spacing: 0.08em; margin-bottom: 24px; }
+
+        .upload-zone { width: 100%; max-width: 760px; position: relative; z-index: 10; }
+        .songs-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: start; margin-bottom: 24px; }
+        .song-col { display: flex; flex-direction: column; gap: 10px; }
+
+        .song-drop { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px 24px; cursor: pointer; transition: all 0.25s ease; position: relative; overflow: hidden; text-align: center; }
+        .song-drop::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,85,0,0.05) 0%, transparent 60%); opacity: 0; transition: opacity 0.25s; }
+        .song-drop:hover { border-color: var(--orange); transform: translateY(-2px); }
+        .song-drop:hover::before { opacity: 1; }
+        .song-drop.has-file { border-color: var(--orange); background: rgba(255,85,0,0.08); }
+
+        .drop-label { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; color: var(--orange); text-transform: uppercase; margin-bottom: 12px; }
+        .drop-icon { width: 40px; height: 40px; margin: 0 auto 12px; opacity: 0.4; }
+        .drop-text { font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+        .drop-sub { font-size: 0.78rem; color: var(--muted); }
+        .drop-filename { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--orange); margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
+        /* TIMESTAMP + RANGE INPUTS */
+        .input-wrap { display: none; flex-direction: column; gap: 6px; }
+        .input-wrap.visible { display: flex; }
+        .input-label { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; text-align: left; }
+        .ts-input { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; font-family: 'JetBrains Mono', monospace; font-size: 1rem; color: var(--text); width: 100%; text-align: center; letter-spacing: 0.05em; transition: border-color 0.2s; outline: none; }
+        .ts-input:focus { border-color: var(--orange); }
+        .ts-input::placeholder { color: var(--dim); }
+        .range-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; }
+        .range-sep { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--muted); }
+
+        .arrow-connector { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 52px; }
+        .arrow-line { width: 40px; height: 1px; background: linear-gradient(90deg, var(--border), var(--orange), var(--border)); }
+        .arrow-tip { font-size: 1.2rem; color: var(--orange); line-height: 1; }
+
+        .analyze-btn { width: 100%; padding: 18px; background: var(--orange); color: white; border: none; border-radius: 12px; font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 600; letter-spacing: 0.02em; cursor: pointer; transition: all 0.2s ease; position: relative; overflow: hidden; }
+        .analyze-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent); transform: translateX(-100%); transition: transform 0.5s ease; }
+        .analyze-btn:hover { background: var(--orange-glow); transform: translateY(-1px); box-shadow: 0 8px 32px rgba(255,85,0,0.35); }
+        .analyze-btn:hover::before { transform: translateX(100%); }
+        .analyze-btn:active { transform: translateY(0); }
+
+        .waveform { position: absolute; bottom: 0; left: 0; right: 0; height: 120px; display: flex; align-items: flex-end; justify-content: center; gap: 3px; padding: 0 48px; overflow: hidden; opacity: 0.25; }
+        .wave-bar { width: 3px; background: linear-gradient(to top, var(--orange), var(--orange-glow)); border-radius: 2px 2px 0 0; animation: wavePulse var(--dur, 1.5s) ease-in-out infinite alternate; animation-delay: var(--delay, 0s); }
+        @keyframes wavePulse { from { height: var(--min-h, 8px); } to { height: var(--max-h, 60px); } }
+
+        .features { display: flex; gap: 48px; margin-top: 64px; justify-content: center; }
+        .feature { text-align: center; }
+        .feature-num { font-family: 'Space Grotesk', sans-serif; font-size: 1.8rem; font-weight: 700; color: var(--orange); line-height: 1; margin-bottom: 4px; }
+        .feature-label { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.05em; }
+        .divider { width: 1px; background: var(--border); }
+
+        .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(10,10,10,0.92); z-index: 500; flex-direction: column; align-items: center; justify-content: center; gap: 24px; }
+        .loading-overlay.active { display: flex; }
+        .loading-bars { display: flex; gap: 4px; align-items: flex-end; height: 48px; }
+        .loading-bar { width: 4px; background: var(--orange); border-radius: 2px; animation: loadingBar 0.8s ease-in-out infinite alternate; }
+        .loading-bar:nth-child(2) { animation-delay: 0.1s; } .loading-bar:nth-child(3) { animation-delay: 0.2s; }
+        .loading-bar:nth-child(4) { animation-delay: 0.3s; } .loading-bar:nth-child(5) { animation-delay: 0.4s; }
+        .loading-bar:nth-child(6) { animation-delay: 0.3s; } .loading-bar:nth-child(7) { animation-delay: 0.2s; }
+        .loading-bar:nth-child(8) { animation-delay: 0.1s; }
+        @keyframes loadingBar { from { height: 8px; } to { height: 48px; } }
+        .loading-text { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--muted); letter-spacing: 0.1em; }
+        .loading-step { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; color: var(--text); font-weight: 500; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo">Transition<span>AI</span></div>
+    <div class="nav-tag">v1.0 — BETA</div>
+</nav>
+
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-bars">
+        <div class="loading-bar"></div><div class="loading-bar"></div>
+        <div class="loading-bar"></div><div class="loading-bar"></div>
+        <div class="loading-bar"></div><div class="loading-bar"></div>
+        <div class="loading-bar"></div><div class="loading-bar"></div>
+    </div>
+    <div class="loading-step" id="loadingStep">Analyzing audio...</div>
+    <div class="loading-text">This may take 30–60 seconds</div>
+</div>
+
+<main class="hero">
+
+    <div class="eyebrow">AI-Powered Mix Intelligence</div>
+    <h1>Find your perfect <em>transition</em></h1>
+    <p class="subtitle">Upload two tracks. The AI analyzes BPM, bass, vocals, harmonics, and energy to find where and how to switch — with SFX placement included.</p>
+
+    <div class="mode-selector">
+        <button type="button" class="mode-btn active" data-mode="auto-auto">Auto → Auto</button>
+        <button type="button" class="mode-btn" data-mode="manual-auto">Manual → Auto</button>
+        <button type="button" class="mode-btn" data-mode="auto-manual">Auto → Manual</button>
+        <button type="button" class="mode-btn" data-mode="manual-manual">Manual → Manual</button>
+        <button type="button" class="mode-btn" data-mode="range-range">Range → Range</button>
+    </div>
+
+    <div class="mode-hint" id="modeHint">AI finds the best transition points in both songs</div>
+
+    <form class="upload-zone" action="/analyze" method="POST" enctype="multipart/form-data" id="analyzeForm">
+
+        <input type="hidden" name="mode" id="modeInput" value="auto-auto">
+
+        <div class="songs-row">
+
+            <div class="song-col">
+                <div class="song-drop" id="drop1">
+                    <input type="file" name="song1" accept=".mp3,.wav" required id="file1">
+                    <div class="drop-label">Song A</div>
+                    <svg class="drop-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="20" cy="20" r="19" stroke="#666" stroke-width="1.5"/>
+                        <path d="M20 12v16M12 20h16" stroke="#FF5500" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    <div class="drop-text">Drop your first track</div>
+                    <div class="drop-sub">.mp3 or .wav</div>
+                    <div class="drop-filename" id="name1"></div>
+                </div>
+
+                <!-- Single timestamp (modes 2 & 4) -->
+                <div class="input-wrap" id="ts1Wrap">
+                    <div class="input-label">Song A — Exit point</div>
+                    <input type="text" name="timestamp1" id="timestamp1" class="ts-input" placeholder="1:20">
+                </div>
+
+                <!-- Range inputs (mode 5) -->
+                <div class="input-wrap" id="range1Wrap">
+                    <div class="input-label">Song A — Search window</div>
+                    <div class="range-row">
+                        <input type="text" name="range1_start" class="ts-input" placeholder="0:37">
+                        <span class="range-sep">→</span>
+                        <input type="text" name="range1_end" class="ts-input" placeholder="0:59">
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow-connector">
+                <div class="arrow-line"></div>
+                <div class="arrow-tip">→</div>
+                <div class="arrow-line"></div>
+            </div>
+
+            <div class="song-col">
+                <div class="song-drop" id="drop2">
+                    <input type="file" name="song2" accept=".mp3,.wav" required id="file2">
+                    <div class="drop-label">Song B</div>
+                    <svg class="drop-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="20" cy="20" r="19" stroke="#666" stroke-width="1.5"/>
+                        <path d="M20 12v16M12 20h16" stroke="#FF5500" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    <div class="drop-text">Drop your second track</div>
+                    <div class="drop-sub">.mp3 or .wav</div>
+                    <div class="drop-filename" id="name2"></div>
+                </div>
+
+                <!-- Single timestamp (modes 3 & 4) -->
+                <div class="input-wrap" id="ts2Wrap">
+                    <div class="input-label">Song B — Entry point</div>
+                    <input type="text" name="timestamp2" id="timestamp2" class="ts-input" placeholder="0:42">
+                </div>
+
+                <!-- Range inputs (mode 5) -->
+                <div class="input-wrap" id="range2Wrap">
+                    <div class="input-label">Song B — Search window</div>
+                    <div class="range-row">
+                        <input type="text" name="range2_start" class="ts-input" placeholder="1:07">
+                        <span class="range-sep">→</span>
+                        <input type="text" name="range2_end" class="ts-input" placeholder="1:29">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <button type="submit" class="analyze-btn">Analyze Transition</button>
+
+    </form>
+
+    <div class="features">
+        <div class="feature"><div class="feature-num">12+</div><div class="feature-label">Audio detectors</div></div>
+        <div class="divider"></div>
+        <div class="feature"><div class="feature-num">BPM</div><div class="feature-label">Key matching</div></div>
+        <div class="divider"></div>
+        <div class="feature"><div class="feature-num">SFX</div><div class="feature-label">Timed placement</div></div>
+        <div class="divider"></div>
+        <div class="feature"><div class="feature-num">AI</div><div class="feature-label">Vocal detection</div></div>
+    </div>
+
+    <div class="waveform" id="waveform"></div>
+
+</main>
+
+<script>
+    // Waveform
+    const waveform = document.getElementById('waveform');
+    for (let i = 0; i < 80; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'wave-bar';
+        bar.style.setProperty('--min-h', (Math.random() * 10 + 4) + 'px');
+        bar.style.setProperty('--max-h', (Math.random() * 70 + 20) + 'px');
+        bar.style.setProperty('--dur', (Math.random() * 1.5 + 0.8) + 's');
+        bar.style.setProperty('--delay', (Math.random() * 1.5) + 's');
+        waveform.appendChild(bar);
+    }
+
+    // File display
+    document.getElementById('file1').addEventListener('change', function() {
+        if (this.files[0]) { document.getElementById('name1').textContent = this.files[0].name; document.getElementById('drop1').classList.add('has-file'); }
+    });
+    document.getElementById('file2').addEventListener('change', function() {
+        if (this.files[0]) { document.getElementById('name2').textContent = this.files[0].name; document.getElementById('drop2').classList.add('has-file'); }
+    });
+
+    // Mode logic
+    const modeHints = {
+        'auto-auto':     'AI finds the best transition points in both songs',
+        'manual-auto':   'You pick where Song A exits — AI finds the best Song B entry',
+        'auto-manual':   'AI finds Song A exit — you pick where Song B enters',
+        'manual-manual': 'You pick both timestamps — AI evaluates the transition quality',
+        'range-range':   'Set search windows for both songs — AI finds the best point within them'
+    };
+
+    function updateMode(mode) {
+        document.getElementById('modeInput').value = mode;
+        document.getElementById('modeHint').textContent = modeHints[mode];
+
+        // Hide all inputs first
+        ['ts1Wrap','ts2Wrap','range1Wrap','range2Wrap'].forEach(id => {
+            document.getElementById(id).classList.remove('visible');
+        });
+
+        // Show based on mode
+        if (mode === 'manual-auto' || mode === 'manual-manual') document.getElementById('ts1Wrap').classList.add('visible');
+        if (mode === 'auto-manual' || mode === 'manual-manual') document.getElementById('ts2Wrap').classList.add('visible');
+        if (mode === 'range-range') {
+            document.getElementById('range1Wrap').classList.add('visible');
+            document.getElementById('range2Wrap').classList.add('visible');
+        }
+    }
+
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            updateMode(this.dataset.mode);
+        });
+    });
+
+    // Loading
+    const steps = ['Loading audio files...','Detecting BPM and beats...','Analyzing bass and 808s...','Running vocal detection...','Mapping harmonic key...','Finding transition points...','Generating SFX recommendations...'];
+    document.getElementById('analyzeForm').addEventListener('submit', function() {
+        document.getElementById('loadingOverlay').classList.add('active');
+        const stepEl = document.getElementById('loadingStep');
+        let i = 0;
+        setInterval(() => { if (i < steps.length) { stepEl.textContent = steps[i]; i++; } }, 7000);
+    });
+</script>
+
+</body>
+</html>
