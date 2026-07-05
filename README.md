@@ -1,115 +1,127 @@
-# TransitionAI — AI Music Transition Assistant
+🎵 TransitionAI — AI Music Transition Assistant
 
 An AI-powered web application that analyzes two audio tracks and recommends the optimal transition point between them — complete with SFX placement timing, harmonic compatibility scoring, vocal gap detection, and plain-English explanations.
 
-Built as a portfolio project targeting audio AI roles at companies like Dolby, Samsung R&D, and Qualcomm.
+> Built with Python, Flask, Demucs, Whisper, and librosa
 
 ---
 
-## What It Does
+## 🎬 Live Demo
+
+https://youtu.be/nK41BGnsxJA 
+
+---
+
+## ✨ What It Does
 
 Upload two songs. TransitionAI runs a full audio analysis pipeline on both tracks and tells you:
 
-- **Where** to transition (exact timestamp in both songs)
-- **Why** that point was chosen (musical reasoning)
-- **What SFX** to add and exactly when to place them
-- **How compatible** the two songs are (BPM, harmonic key, spectral similarity)
-- **Whether vocals are active** at the transition point (Whisper-based vocal gap detection)
+- **Where** to transition — exact timestamp in both songs (MM:SS format)
+- **Why** that point was chosen — plain English musical reasoning
+- **What SFX** to add and exactly when to place them (whoosh 2s before, impact on the beat etc)
+- **How compatible** the two songs are — BPM, harmonic key, spectral similarity
+- **Whether vocals are active** at the transition point — Whisper-based vocal gap detection
 
 ---
 
-## Features
+## 🔥 Features
 
-- 12+ audio component detectors — bass, 808s, kicks, snares, hi-hats, chords, melody, synth, reverb, drops, build-ups
-- Whisper-powered vocal detection and gap analysis
-- BPM compatibility scoring with half/double-time awareness
-- Harmonic key matching using chroma features and the Camelot wheel
-- Cross-song SFX recommendations with millisecond-level placement timing
-- Explanation engine — reasons, strengths, and warnings for every recommendation
-- Compatibility rating — Excellent / Good / Fair / Low Compatibility
-- 5 transition modes:
+- **Demucs stem separation** — splits each song into bass, drums, vocals, other stems before analysis. Each detector only sees its relevant audio source for dramatically higher accuracy
+- **12+ audio component detectors** — bass, 808s, kicks, snares, hi-hats, chords, melody, synth, reverb, drops, build-ups
+- **Smart stem caching** — Demucs only runs once per song. Repeat uploads are instant
+- **Whisper vocal detection** — runs on clean vocal stem, no background noise interference
+- **BPM compatibility scoring** — with half/double-time awareness (140 BPM mixes cleanly with 70 BPM)
+- **Harmonic key matching** — chroma-based key detection + Camelot wheel compatibility
+- **Cross-song SFX recommendations** — looks at BOTH songs' features together, not each in isolation
+- **Millisecond-level SFX timing** — "add whoosh at 1:18, impact at 1:20, bass carry from 1:20"
+- **Compatibility rating** — Excellent / Good / Fair / Low Compatibility with color coding
+- **Explanation engine** — reasons selected, strengths, and honest warnings for every recommendation
+- **5 transition modes:**
   - Auto → Auto (AI finds both points)
   - Manual → Auto (you fix Song A, AI finds Song B)
   - Auto → Manual (AI finds Song A, you fix Song B)
-  - Manual → Manual (you pick both, AI evaluates)
+  - Manual → Manual (you pick both, AI evaluates quality)
   - Range → Range (set search windows, AI finds best point within them)
-- Dark, immersive web UI with animated waveform and loading states
+- Dark immersive UI with animated waveform and loading states
 
 ---
 
-## Tech Stack
+## 🛠 Tech Stack
 
 | Layer | Technology |
 |---|---|
 | Backend | Python, Flask |
+| Stem Separation | Meta Demucs (htdemucs pretrained model) |
+| Vocal Detection | OpenAI Whisper (base model) |
 | Audio Analysis | librosa, scipy |
-| Vocal Detection | OpenAI Whisper |
-| Feature Extraction | librosa (STFT, chroma, MFCCs, spectral features) |
+| Feature Extraction | STFT, chroma, MFCCs, spectral features |
 | Frontend | HTML, CSS, JavaScript (vanilla) |
 | Typography | Space Grotesk, JetBrains Mono, Inter |
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 music-transition-assistant/
-├── app.py                     # Flask application + all 5 transition modes
-├── main.py                    # CLI pipeline for single song testing
+├── app.py                         # Flask app + all 5 transition modes
+├── main.py                        # CLI pipeline for single song testing
 ├── src/
-│   ├── audio_loader.py        # librosa audio loading
-│   ├── beat_detector.py       # BPM and beat tracking
-│   ├── energy_analyzer.py     # RMS energy curve + section detection
-│   ├── bass_analyzer.py       # Bass frequency analysis
-│   ├── feature_extractor.py   # Full spectral feature extraction
-│   ├── detector_808.py        # Sub-bass 808 detection
-│   ├── kick_detector.py       # Kick drum detection
-│   ├── snare_detector.py      # Snare detection
-│   ├── hihat_detector.py      # Hi-hat detection
-│   ├── chord_detector.py      # Chord detection via chroma variance
-│   ├── melody_detector.py     # Melodic activity detection
-│   ├── synth_detector.py      # Synth/pad detection
-│   ├── reverb_detector.py     # Reverb estimation
-│   ├── drop_detector.py       # Drop detection
-│   ├── buildup_detector.py    # Build-up detection
-│   ├── vocal_analyzer.py      # Whisper vocal segment detection
-│   ├── lyric_gap_detector.py  # Vocal gap identification
-│   ├── event_classifier.py    # Multi-feature event classification
-│   ├── ranking_engine.py      # Musical quality × vocal safety scoring
-│   ├── dual_song_matcher.py   # Cross-song transition pair matching
-│   ├── transition_scorer.py   # Weighted transition scoring
-│   ├── transition_recommender.py  # SFX recommendations with timing
-│   ├── explanation_engine.py  # Plain-English transition reasoning
-│   ├── manual_analyzer.py     # Manual/range mode utilities
-│   ├── bpm_compatibility.py   # BPM matching with half/double time
+│   ├── audio_loader.py            # librosa audio loading
+│   ├── beat_detector.py           # BPM and beat tracking
+│   ├── energy_analyzer.py         # RMS energy curve + section detection
+│   ├── bass_analyzer.py           # Bass frequency analysis
+│   ├── feature_extractor.py       # Full spectral feature extraction
+│   ├── stem_separator.py          # Demucs stem separation with caching
+│   ├── detector_808.py            # Sub-bass 808 detection (bass stem)
+│   ├── kick_detector.py           # Kick drum detection (drums stem)
+│   ├── snare_detector.py          # Snare detection (drums stem)
+│   ├── hihat_detector.py          # Hi-hat detection (drums stem)
+│   ├── chord_detector.py          # Chord detection via chroma variance (other stem)
+│   ├── melody_detector.py         # Melodic activity detection (other stem)
+│   ├── synth_detector.py          # Synth/pad detection (other stem)
+│   ├── reverb_detector.py         # Reverb estimation (other stem)
+│   ├── drop_detector.py           # Drop detection (drums stem)
+│   ├── buildup_detector.py        # Build-up detection (other stem)
+│   ├── vocal_analyzer.py          # Whisper vocal segment detection (vocals stem)
+│   ├── lyric_gap_detector.py      # Vocal gap identification
+│   ├── event_classifier.py        # Multi-feature event classification
+│   ├── ranking_engine.py          # Musical quality × vocal safety scoring
+│   ├── dual_song_matcher.py       # Cross-song transition pair matching
+│   ├── transition_scorer.py       # Weighted transition scoring
+│   ├── transition_recommender.py  # Cross-song SFX recommendations with timing
+│   ├── explanation_engine.py      # Plain-English transition reasoning
+│   ├── manual_analyzer.py         # Manual/range mode utilities
+│   ├── bpm_compatibility.py       # BPM matching with half/double time
 │   ├── harmonic_compatibility.py  # Key compatibility via Camelot wheel
-│   ├── similarity_engine.py   # Spectral similarity scoring
+│   ├── similarity_engine.py       # Spectral similarity scoring
 │   ├── music_context_engine.py    # Musical context tagging
-│   ├── confidence_engine.py   # Confidence scoring
-│   └── frequency_analyzer.py  # Frequency band analysis
+│   ├── confidence_engine.py       # Confidence scoring
+│   └── frequency_analyzer.py     # Frequency band analysis
 ├── templates/
-│   ├── index.html             # Upload UI with mode selector
-│   └── results.html           # Results page with full analysis
-├── songs/                     # Uploaded audio files (gitignored)
+│   ├── index.html                 # Upload UI with mode selector
+│   └── results.html               # Results page with full analysis
+├── songs/                         # Uploaded audio (gitignored)
+├── separated/                     # Demucs stem cache (gitignored)
 ├── requirements.txt
 └── .gitignore
 ```
 
 ---
 
-## Installation
+## 🚀 Installation
 
-**Prerequisites:** Python 3.9+, pip
+**Prerequisites:** Python 3.9+, pip, ffmpeg
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/music-transition-assistant.git
+git clone https://github.com/rishis1206/music-transition-assistant.git
 cd music-transition-assistant
 
 # Create virtual environment
 python -m venv venv
 
-# Activate it
+# Activate
 # Windows:
 venv\Scripts\activate
 # macOS/Linux:
@@ -118,66 +130,72 @@ source venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Create songs directory
+# Create required directories
 mkdir songs
+mkdir -p separated/htdemucs
 
-# Run the app
+# Run
 python app.py
 ```
 
-Then open `http://127.0.0.1:5000` in your browser.
+Then open `http://127.0.0.1:5000`
+
+> **Note:** First time a song is uploaded, Demucs will separate it into stems (2–4 mins on CPU). Every subsequent upload of the same song is instant due to caching.
 
 ---
 
-## How It Works
+## ⚙️ How It Works
 
 ### Analysis Pipeline
 
 ```
-Audio File
+MP3 Upload
     ↓
-Feature Extraction (STFT, chroma, MFCCs, spectral features)
+Demucs Stem Separation (bass / drums / vocals / other)
     ↓
-Beat Detection (BPM, beat grid)
+Stem-Specific Detection:
+  bass stem    → bass analyzer + 808 detector
+  drums stem   → kick + snare + hihat + drop detector
+  other stem   → chord + melody + synth + reverb + buildup detector
+  vocals stem  → Whisper transcription → vocal gap detection
     ↓
-Component Detection (808, kick, snare, hihat, chord, melody, synth, reverb, drop, buildup)
+Full mix → BPM + beat detection + energy analysis + feature extraction
     ↓
-Whisper Vocal Analysis (segment timestamps, gap detection)
-    ↓
-Event Classification (multi-feature scoring → event type)
+Event Classifier (scores every candidate point, assigns event type)
     ↓
 Ranking Engine (musical quality × vocal safety multiplier)
     ↓
-Dual Song Matching (BPM + harmonic + vocal + energy compatibility)
+Dual Song Matcher (cross-references Song A × Song B with BPM + harmonic + vocal scoring)
     ↓
-Transition Scoring (weighted combination of all factors)
-    ↓
-SFX Recommendations (cross-song context aware, millisecond timing)
+SFX Recommender (cross-song context aware, millisecond timing)
     ↓
 Explanation Engine (reasons, strengths, warnings, verdict)
+    ↓
+Flask renders results
 ```
 
 ### Scoring Formula
 
 ```
-Musical Score = bass(25%) + energy(20%) + confidence(15%) + vocal_gap(15%) + BPM(12%) + harmonic(8%) + similarity(5%)
+Musical Score = bass(18) + energy(18) + rms(10) + 808(10) + kick(10)
+              + snare(8) + hihat(6) + chord(6) + melody(5) + synth(4) + reverb(2)
 
-Final Score = Musical Score × Vocal Safety Multiplier (1.0–1.3)
+Final Score = Musical Score × Vocal Safety Multiplier (1.0 – 1.3)
 
-Compatibility = BPM(40%) + Harmonic(35%) + Similarity(25%)
+Compatibility % = BPM score(40%) + Harmonic score(35%) + Similarity(25%)
 ```
 
-### Chord Detection
+### Why Stem Separation Matters
 
-Uses chroma variance rather than raw chroma max — real chords spread energy across multiple pitch classes (low variance), while melody or percussion concentrates in fewer bins (high variance). This prevents the common false-positive problem where every frame gets classified as a chord.
+Without stems, a bass detector analyzing a full mix picks up bleed from kick drums, vocals, and synths in overlapping frequency ranges. With Demucs isolating each source first, every detector only sees its relevant audio — dramatically improving accuracy. Whisper on a clean vocal stem also eliminates false transcriptions from background instrumentation.
 
-### Vocal Gap Detection
+### Chord Detection Fix
 
-Whisper transcribes the audio and returns segment timestamps. Gaps between segments longer than 1 second are marked as safe transition zones. Events within these zones receive a vocal safety multiplier boost in scoring, but cannot override musically weak candidates.
+Original implementation used `np.max(chroma, axis=0)` — this grabs the loudest pitch class per frame, which is always high in any musical content, causing 90%+ of frames to be classified as chords. Fixed using **chroma variance** — real chords spread energy across multiple pitch classes simultaneously (low variance), while melody or percussion concentrates in fewer bins (high variance). Inverting variance gives accurate chord detection.
 
 ---
 
-## Transition Modes
+## 🎛 Transition Modes
 
 | Mode | Song A | Song B | Use Case |
 |---|---|---|---|
@@ -189,33 +207,33 @@ Whisper transcribes the audio and returns segment timestamps. Gaps between segme
 
 ---
 
-## Known Limitations
+## ⚠️ Known Limitations
 
-- Whisper runs on CPU — analysis takes 30–60 seconds per song pair
-- Synth and reverb detectors have high sensitivity on atmospheric/ambient music (by design — Metro Boomin production correctly scores high on reverb)
-- Model training not yet implemented — all detectors are DSP rule-based
-- No audio playback in the UI (planned for v2)
+- Demucs + Whisper run on CPU — first-time analysis takes 3–5 mins per song (cached after)
+- High reverb/synth scores on atmospheric music are by design (Metro Boomin correctly scores high)
+- All component detectors are DSP rule-based — ML model training planned for v2
+- No in-browser audio playback yet
 
 ---
 
-## Roadmap
+## 🗺 Roadmap
 
-- [ ] Replace rule-based detectors with pretrained ML models (Demucs for source separation, Essentia for component classification)
-- [ ] Audio preview at transition point in the browser
-- [ ] Waveform timeline with drag-and-drop transition markers
-- [ ] Genre detection (trap, EDM, lo-fi, phonk, house etc)
-- [ ] Export transition report as PDF
 - [ ] Async processing so UI doesn't block during analysis
+- [ ] In-browser audio preview at transition point
+- [ ] Waveform timeline with drag-and-drop markers
+- [ ] Genre detection (trap, EDM, lo-fi, phonk, house)
+- [ ] Essentia integration for ML-based component classification
+- [ ] Export transition report as PDF
 - [ ] Mobile responsive layout
+- [ ] Deployment to cloud with GPU support
 
 ---
 
-## Background
+## 👨‍💻 Developer
 
-Built by a final-year AI & ML student (VTU) with a background in video and music editing. The project came from a real frustration — existing DJ tools give you BPM matching but nothing tells you *why* a transition works or exactly where to place the SFX that makes it feel natural.
+**Rishi S**
+Final Year AI & ML Student — GMIT, Davangere (VTU)
 
 ---
 
-## License
-
-MIT
+## 📄 License
