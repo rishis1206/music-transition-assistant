@@ -1,24 +1,27 @@
-🎵 TransitionAI — AI Music Transition Assistant
+🎵 TransitionAI — Audio Analysis & Transition Engine
 
-An AI-powered web application that analyzes two audio tracks and recommends the optimal transition point between them — complete with SFX placement timing, harmonic compatibility scoring, vocal gap detection, and plain-English explanations.
+A DSP-driven system that analyzes two audio tracks from raw signal features up — chroma, MFCCs, spectral 
+characteristics — through 12+ custom rule-based detectors, then layers in Demucs stem separation and Whisper 
+transcription to sharpen accuracy. Outputs the optimal transition point between two songs, complete with SFX 
+placement timing, harmonic compatibility scoring, vocal gap detection, and plain-English explanations.
 
-> Built with Python, Flask, Demucs, Whisper, and librosa
-
+> Core engine built on librosa/scipy signal processing; refined using Demucs and Whisper
 ---
 
 ## 🎬 Live Demo
-
-https://youtu.be/nK41BGnsxJA 
+https://youtu.be/nK41BGnsxJA
 
 ---
 
 ## ✨ What It Does
 
-Upload two songs. TransitionAI runs a full audio analysis pipeline on both tracks and tells you:
+Upload two songs. TransitionAI runs a 12+ detector DSP pipeline on both tracks — built from raw audio features 
+before any pretrained model touches the signal — then refines the output using stem separation and vocal 
+transcription. It tells you:
 
 - **Where** to transition — exact timestamp in both songs (MM:SS format)
-- **Why** that point was chosen — plain English musical reasoning
-- **What SFX** to add and exactly when to place them (whoosh 2s before, impact on the beat etc)
+- **Why** that point was chosen — plain English musical reasoning, grounded in the actual DSP scores
+- **What SFX** to add and exactly when to place them (whoosh 2s before, impact on the beat, etc.)
 - **How compatible** the two songs are — BPM, harmonic key, spectral similarity
 - **Whether vocals are active** at the transition point — Whisper-based vocal gap detection
 
